@@ -1,0 +1,52 @@
+name: Update Forecast Data
+
+on:
+  schedule:
+    - cron: '0 5,11,17,23 * * *'
+  workflow_dispatch: 
+
+permissions:
+  contents: write
+
+jobs:
+  fetch-and-convert:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '11'
+
+      - name: Install grib2json
+        run: |
+          git clone https://github.com/cambecc/grib2json.git
+          cd grib2json
+          mvn package
+          cd ..
+
+      - name: Fetch and Convert NOAA Data
+        run: |
+          mkdir -p data
+          DATE=$(date -u +%Y%m%d)
+          
+          URL_0H="https://nomads.ncep.noaa.gov/cgi-bin/filter_gfs_1p00.pl?file=gfs.t00z.pgrb2.1p00.f000&lev_10_m_above_ground=on&var_UGRD=on&var_VGRD=on&dir=%2Fgfs.$DATE%2F00%2Fatmos"
+          echo "Downloading 0h forecast..."
+          curl -s -o current-wind.grib2 "$URL_0H"
+          echo "Converting to JSON..."
+          ./grib2json/target/grib2json-0.8.0-SNAPSHOT/bin/grib2json -d -n -o data/wind-0h.json current-wind.grib2
+          
+          URL_12H="https://nomads.ncep.noaa.gov/cgi-bin/filter_gfs_1p00.pl?file=gfs.t00z.pgrb2.1p00.f012&lev_10_m_above_ground=on&var_UGRD=on&var_VGRD=on&dir=%2Fgfs.$DATE%2F00%2Fatmos"
+          echo "Downloading 12h forecast..."
+          curl -s -o future-wind.grib2 "$URL_12H"
+          echo "Converting to JSON..."
+          ./grib2json/target/grib2json-0.8.0-SNAPSHOT/bin/grib2json -d -n -o data/wind-12h.json future-wind.grib2
+
+      - name: Commit and push updated JSON files
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "Automated update of wind forecast data"
+          file_pattern: data/*.json
