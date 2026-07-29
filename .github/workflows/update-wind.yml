@@ -26,6 +26,8 @@ jobs:
           git clone https://github.com/cambecc/grib2json.git
           cd grib2json
           mvn package
+          # This is the line we missed! We need to unzip the packaged file.
+          tar -xzf target/grib2json-*.tar.gz -C target/
           cd ..
 
       - name: Fetch and Convert NOAA Data
