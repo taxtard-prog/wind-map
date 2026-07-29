@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Wind Map</title>
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <!-- Leaflet-Velocity CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-velocity@1.6.0/dist/leaflet-velocity.css" />
+    
+    <style>
+        body { margin: 0; padding: 0; }
+        #map { width: 100vw; height: 100vh; background: #222; }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- Leaflet-Velocity JS -->
+    <script src="https://unpkg.com/leaflet-velocity@1.6.0/dist/leaflet-velocity.min.js"></script>
+
+    <script>
+        // Initialize the map (Centered over the Mediterranean)
+        const map = L.map('map').setView([35.9, 14.4], 5);
+
+        // Add a dark base map
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
+            subdomains: 'abcd',
+            maxZoom: 19
+        }).addTo(map);
+
+        // Fetch the sample wind data
+        fetch('https://onaci.github.io/leaflet-velocity/wind-global.json')
+            .then(response => response.json())
+            .then(data => {
+                const velocityLayer = L.velocityLayer({
+                    displayValues: true,
+                    displayOptions: {
+                        velocityType: 'Global Wind',
+                        position: 'bottomleft',
+                        emptyString: 'No wind data available'
+                    },
+                    data: data,
+                    maxVelocity: 15,
+                    velocityScale: 0.005,
+                    colorScale: [
+                        "rgb(36,104, 180)", "rgb(60,157, 194)", 
+                        "rgb(128,205,193)", "rgb(151,218,168)", 
+                        "rgb(198,231,181)", "rgb(238,247,217)", 
+                        "rgb(255,238,159)", "rgb(252,217,125)", 
+                        "rgb(255,182,100)", "rgb(252,150,75)", 
+                        "rgb(250,112,52)",  "rgb(245,64,32)", 
+                        "rgb(237,45,28)",   "rgb(220,24,32)", 
+                        "rgb(180,0,35)"
+                    ]
+                });
+                
+                velocityLayer.addTo(map);
+            })
+            .catch(err => console.error("Error loading wind data:", err));
+    </script>
+</body>
+</html>
