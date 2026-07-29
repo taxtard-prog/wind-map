@@ -35,7 +35,7 @@
         }).addTo(map);
 
         // Fetch the sample wind data
-        fetch('https://onaci.github.io/leaflet-velocity/wind-global.json')
+        fetch('data/wind-0h.json')
             .then(response => response.json())
             .then(data => {
                 const velocityLayer = L.velocityLayer({
